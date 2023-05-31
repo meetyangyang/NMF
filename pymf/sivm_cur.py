@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: sivmcur.py 24 2010-09-01 07:51:05Z cthurau $
+#$Author: cthurau $
 """  
 PyMF Simplex Volume Maximization for CUR [1]
 
@@ -9,10 +14,14 @@ PyMF Simplex Volume Maximization for CUR [1]
 Maximization for Descriptive Web-Scale Matrix Factorization. In Proc. Int. 
 Conf. on Information and Knowledge Management. ACM. 2010.
 """
+
+__version__ = "$Revision: 45 $"
+# $Source$
+
 import numpy as np
 import scipy
-from sivm import SIVM
-from cur import CUR
+from pymf.sivm import SIVM
+from pymf.cur import CUR
 
 __all__ = ["SIVM_CUR"]
 
@@ -48,7 +57,7 @@ class SIVM_CUR(CUR):
     -------
     >>> import numpy as np
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
-    >>> sivmcur_mdl = SIVM_CUR(data, rrank=1, crank=2)    
+    >>> sivmcur_mdl = SIVM_CUR(data, show_progress=False, rrank=1, crank=2)    
     >>> sivmcur_mdl.factorize()
     '''
     
@@ -86,9 +95,7 @@ class SIVM_CUR(CUR):
                                     
         self.computeUCR()
 
-def _test():
-    import doctest
-    doctest.testmod()
- 
+
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()                    

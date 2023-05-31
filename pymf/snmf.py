@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: snmf.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """  
 PyMF Semi Non-negative Matrix Factorization.
 
@@ -8,18 +13,23 @@ PyMF Semi Non-negative Matrix Factorization.
 [1] Ding, C., Li, T. and Jordan, M.. Convex and Semi-Nonnegative Matrix Factorizations.
 IEEE Trans. on Pattern Analysis and Machine Intelligence 32(1), 45-55. 
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
+
 import numpy as np
-from base import PyMFBase
+
+from pymf.nmf import NMF
 
 __all__ = ["SNMF"]
 
-class SNMF(PyMFBase):
+class SNMF(NMF):
     """      
     SNMF(data, num_bases=4)
     
     Semi Non-negative Matrix Factorization. Factorize a data matrix into two 
-    matrices s.t. F = | data - W*H | is minimal. For Semi-NMF only H is 
-    constrained to non-negativity.
+    matrices s.t. F = | data - W*H | is minimal.
     
     Parameters
     ----------
@@ -58,12 +68,12 @@ class SNMF(PyMFBase):
     """
 
 
-    def _update_w(self):
+    def update_w(self):
         W1 = np.dot(self.data[:,:], self.H.T)
         W2 = np.dot(self.H, self.H.T)    
         self.W = np.dot(W1, np.linalg.inv(W2))
         
-    def _update_h(self):
+    def update_h(self):
         def separate_positive(m):
             return (np.abs(m) + m)/2.0 
         
@@ -80,13 +90,10 @@ class SNMF(PyMFBase):
         H1 = (XW_pos + np.dot(self.H.T, WW_neg)).T
         
         XW_neg = separate_negative(XW)
-        H2 = (XW_neg + np.dot(self.H.T, WW_pos)).T + 10**-9
+        H2 = (XW_neg + np.dot(self.H.T,WW_pos)).T + 10**-9
         
         self.H *= np.sqrt(H1/H2)    
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
+    
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()            

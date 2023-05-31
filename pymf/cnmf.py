@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: cnmf.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """      
 PyMF Convex Matrix Factorization [1]
 
@@ -8,14 +13,18 @@ PyMF Convex Matrix Factorization [1]
 [1] Ding, C., Li, T. and Jordan, M.. Convex and Semi-Nonnegative Matrix Factorizations.
 IEEE Trans. on Pattern Analysis and Machine Intelligence 32(1), 45-55.
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
 import logging
-from kmeans import Kmeans
-from base import PyMFBase
+from pymf.nmf import NMF
+from pymf.kmeans import Kmeans
 
 __all__ = ["CNMF"]
 
-class CNMF(PyMFBase):
+class CNMF(NMF):
     """      
     CNMF(data, num_bases=4)
     
@@ -63,8 +72,13 @@ class CNMF(PyMFBase):
 
     # see .factorize() for the update of W and H
     # -> proper decoupling of W/H not possible ...
-      
-    def _init_h(self):
+    def update_w(self):
+        pass        
+        
+    def update_h(self):
+        pass
+    
+    def init_h(self):
         if not hasattr(self, 'H'):
             # init basic matrices       
             self.H = np.zeros((self._num_bases, self._num_samples))
@@ -91,12 +105,12 @@ class CNMF(PyMFBase):
         if not hasattr(self,'W'):
             self.W = np.dot(self.data[:,:], self.G)
     
-    def _init_w(self):
+    def init_w(self):
         pass
     
     def factorize(self, niter=10, compute_w=True, compute_h=True, 
                   compute_err=True, show_progress=False):
-        """ Factorize s.t. WH = data. 
+        """ Factorize s.t. WH = data
             
             Parameters
             ----------
@@ -120,10 +134,10 @@ class CNMF(PyMFBase):
         """   
         
         if not hasattr(self,'W'):
-               self._init_w()
+               self.init_w()
                
         if not hasattr(self,'H'):
-                self._init_h()              
+                self.init_h()              
         
         def separate_positive(m):
             return (np.abs(m) + m)/2.0 
@@ -143,7 +157,7 @@ class CNMF(PyMFBase):
         self.ferr = np.zeros(niter)
         # iterate over W and H
         
-        for i in xrange(niter):
+        for i in range(niter):
             # update H
             XtX_neg_x_W = np.dot(XtX_neg, self.G)
             XtX_pos_x_W = np.dot(XtX_pos, self.G)
@@ -165,18 +179,16 @@ class CNMF(PyMFBase):
                                 
             if compute_err:                 
                 self.ferr[i] = self.frobenius_norm()
-                self._logger.info('FN: %s (%s/%s)'  %(self.ferr[i], i+1, niter))
+                self._logger.info('Iteration ' + str(i+1) + '/' + str(niter) + 
+                ' FN:' + str(self.ferr[i]))
             else:                
-                self._logger.info('Iteration: (%s/%s)'  %(i+1, niter))
+                self._logger.info('Iteration ' + str(i+1) + '/' + str(niter))
 
             if i > 1 and compute_err:
-                if self._converged(i):                    
+                if self.converged(i):                    
                     self.ferr = self.ferr[:i]                    
                     break
 
-def _test():
-    import doctest
-    doctest.testmod()
- 
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    

@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python2.6
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: sivm.py 22 2010-08-13 11:16:43Z cthurau $
+#$Author: cthurau $
 """ 
 PyMF Simplex Volume Maximization [1]
 
@@ -9,12 +14,16 @@ PyMF Simplex Volume Maximization [1]
 Maximization for Descriptive Web-Scale Matrix Factorization. In Proc. Int. 
 Conf. on Information and Knowledge Management. ACM. 2010.
 """
+
+__version__ = "$Revision: 45 $"
+# $Source$
+
 import numpy as np
 import time
 
-from dist import *
-from base import *
-from sivm_search import SIVM_SEARCH
+from pymf.dist import *
+from pymf.vol import *
+from pymf.sivm_search import SIVM_SEARCH
 
 __all__ = ["SIVM_SGREEDY"]
 
@@ -52,6 +61,10 @@ class SIVM_SGREEDY(SIVM_SEARCH):
         The distance measure for finding the next best candidate that 
         maximizes the simplex volume ['l2','l1','cosine','sparse_graph_l2']
         'l2' (default)
+    optimize_lower_bound: bool, optional
+        Use the alternative selection criterion that optimizes the lower
+        bound (see [1])
+        False (default)
     
     Attributes
     ----------
@@ -67,6 +80,7 @@ class SIVM_SGREEDY(SIVM_SEARCH):
     >>> import numpy as np
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
     >>> sivm_mdl = SIVM_SGREEDY(data, num_bases=2, niter=10)
+    >>> sivm_mdl.initialization()
     >>> sivm_mdl.factorize()
     
     The basis vectors are now stored in sivm_mdl.W, the coefficients in sivm_mdl.H. 
@@ -76,13 +90,14 @@ class SIVM_SGREEDY(SIVM_SEARCH):
     >>> data = np.array([[1.5, 1.3], [1.2, 0.3]])
     >>> W = np.array([[1.0, 0.0], [0.0, 1.0]])
     >>> sivm_mdl = SIVM_SGREEDY(data, num_bases=2, niter=1, compW=False)
+    >>> sivm_mdl.initialization()
     >>> sivm_mdl.W = W
     >>> sivm_mdl.factorize()
     
     The result is a set of coefficients sivm_mdl.H, s.t. data = W * sivm_mdl.H.
     """
 
-    def _update_w(self):        
+    def update_w(self):        
         # compute distance matrix -> requiresd for the volume
         self.init_sivm()
         next_sel = list([self.select[0]])
@@ -120,10 +135,9 @@ class SIVM_SGREEDY(SIVM_SEARCH):
         # update some values ...
         self.select = list(next_sel)
         self.W = self.data[:, self.select] 
+    
 
-def _test():
-    import doctest
-    doctest.testmod()
- 
+
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    

@@ -11,8 +11,8 @@ a Compressed Approixmate Matrix Decomposition', SIAM J. Computing 36(1), 184-206
 import numpy as np
 import scipy.sparse
 
-from svd import pinv, SVD
-from cmde import CMD
+from pymf.svd import pinv, SVD
+from pymf.cmde import CMD
 
 __all__ = ["CURSL"]
 
@@ -47,7 +47,7 @@ class CURSL(CMD):
     Example
     -------
     >>> import numpy as np
-    >>> from cur import CUR
+    >>> from pymf.cur import CUR
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
     >>> cur_mdl = CURSL(data, rrank=1, crank=2)    
     >>> cur_mdl.factorize()

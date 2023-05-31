@@ -1,25 +1,34 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python2.6
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: sivm.py 22 2010-08-13 11:16:43Z cthurau $
+#$Author: cthurau $
 """ 
 PyMF Simplex Volume Maximization [1]
 
-    SIVM_GSAT: class for GSAT-SIVM
+    SIVM_GSAT: class for gsat-SiVM
 
 [1] C. Thurau, K. Kersting, and C. Bauckhage. Yes We Can - Simplex Volume 
 Maximization for Descriptive Web-Scale Matrix Factorization. In Proc. Int. 
 Conf. on Information and Knowledge Management. ACM. 2010.
 """
+
+__version__ = "$Revision: 45 $"
+# $Source$
+
 import logging
 import numpy as np
-from dist import *
-from base import cmdet
-from sivm import SIVM
+from pymf.dist import *
+from pymf.vol import cmdet
+from pymf.sivm import SIVM
 
 __all__ = ["SIVM_GSAT"]
 
 class SIVM_GSAT(SIVM):
     """      
-    SIVM_GSAT(data, num_bases=4, dist_measure='l2')
+    SIVM(data, num_bases=4, dist_measure='l2')
     
     
     Simplex Volume Maximization. Factorize a data matrix into two matrices s.t.
@@ -70,11 +79,11 @@ class SIVM_GSAT(SIVM):
     The result is a set of coefficients sivm_mdl.H, s.t. data = W * sivm_mdl.H.
     """
 
-    def _init_w(self):
+    def init_w(self):
         self.select = range(self._num_bases)
         self.W = self.data[:, self.select]
         
-    def _online_update_w(self, vec):
+    def online_update_w(self, vec):
         # update D if it does not exist   
         k = self._num_bases
         if not hasattr(self, 'D'):
@@ -111,10 +120,10 @@ class SIVM_GSAT(SIVM):
             
         return False,-1
         
-    def _update_w(self): 
+    def update_w(self): 
         n = np.int(np.floor(np.random.random() * self._num_samples))
         if n not in self.select:
-            updated, s = self._online_update_w(self.data[:,n])
+            updated, s = self.online_update_w(self.data[:,n])
             if updated:
                 self.select[s] = n    
                 self._logger.info('Current selection:' + str(self.select))
@@ -152,30 +161,29 @@ class SIVM_GSAT(SIVM):
         # create W and H if they don't already exist
         # -> any custom initialization to W,H should be done before
         if not hasattr(self,'W'):
-               self._init_w()
+               self.init_w()
                
         if not hasattr(self,'H'):
-                self._init_h()                   
+                self.init_h()                   
 
         if compute_err:
             self.ferr = np.zeros(niter)
              
-        for i in xrange(niter):
+        for i in range(niter):
             if compute_w:
-                self._update_w()
+                self.update_w()
 
             if compute_h:
-                self._update_h()                                        
+                self.update_h()                                        
              
             if compute_err:                 
-                self.ferr[i] = self.frobenius_norm()                
-                self._logger.info('FN: %s (%s/%s)'  %(ferr[i], i+1, niter))
+                self.ferr[i] = self.frobenius_norm()
+                self._logger.info('Iteration ' + str(i+1) + '/' + str(niter) + 
+                    ' FN:' + str(self.ferr[i]))
             else:                
-                self._logger.info('Iteration: (%s/%s)'  %(i+1, niter))
-         
-def _test():
-    import doctest
-    doctest.testmod()
- 
+                self._logger.info('Iteration ' + str(i+1) + '/' + str(niter))
+
+                  
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    

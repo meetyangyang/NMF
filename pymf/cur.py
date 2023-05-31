@@ -1,23 +1,31 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: cur.py 24 2010-09-01 07:51:05Z cthurau $
+#$Author: cthurau $
 """
 PyMF CUR Decomposition [1]
 
-    CUR(SVD) : Class for CUR Decomposition (uses an l2-norm based sampling)
+    CUR(SVD) : Class for CUR Decomposition
 
 [1] Drineas, P., Kannan, R. and Mahoney, M. (2006), 'Fast Monte Carlo Algorithms III: Computing 
 a Compressed Approixmate Matrix Decomposition', SIAM J. Computing 36(1), 184-206.
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
 import scipy.sparse
 
-from svd import pinv
-from base import PyMFBase3
+from pymf.svd import pinv, SVD
 
 
 __all__ = ["CUR"]
 
-class CUR(PyMFBase3):
+class CUR(SVD):
     """      
     CUR(data,  data, k=-1, rrank=0, crank=0)
         
@@ -41,23 +49,19 @@ class CUR(PyMFBase3):
     
     Attributes
     ----------
-        U,S,V : submatrices s.t. data = USV (or _C _U _R)
+        U,S,V : submatrices s.t. data = USV        
     
     Example
     -------
     >>> import numpy as np
     >>> from cur import CUR
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
-    >>> cur_mdl = CUR(data, rrank=1, crank=2)    
+    >>> cur_mdl = CUR(data, show_progress=False, rrank=1, crank=2)    
     >>> cur_mdl.factorize()
     """
     
     def __init__(self, data, k=-1, rrank=0, crank=0):
-        """
-        Parameters
-        ----------
-        """
-        PyMFBase3.__init__(self, data,k=k,rrank=rrank, crank=rrank)
+        SVD.__init__(self, data,k=k,rrank=rrank, crank=rrank)
         
         # select all data samples for computing the error:
         # note that this might take very long, adjust self._rset and self._cset 
@@ -67,13 +71,6 @@ class CUR(PyMFBase3):
 
         
     def sample(self, s, probs):        
-        """
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
         prob_rows = np.cumsum(probs.flatten())            
         temp_ind = np.zeros(s, np.int32)
     
@@ -89,13 +86,7 @@ class CUR(PyMFBase3):
         return np.sort(temp_ind)
         
     def sample_probability(self):
-        """
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
+        
         if scipy.sparse.issparse(self.data):
             dsquare = self.data.multiply(self.data)    
         else:
@@ -110,13 +101,6 @@ class CUR(PyMFBase3):
         return (prow.reshape(-1,1), pcol.reshape(-1,1))
                             
     def computeUCR(self):                
-        """
-        Parameters
-        ----------
-
-        Returns
-        -------
-        """
         # the next  lines do NOT work with h5py if CUR is used -> double indices in self.cid or self.rid
         # can occur and are not supported by h5py. When using h5py data, always use CMD which ignores
         # reoccuring row/column selections.
@@ -128,9 +112,8 @@ class CUR(PyMFBase3):
             self._U = pinv(self._C, self._k) * self.data[:,:] * pinv(self._R, self._k)
                      
         else:        
-            self._C = np.dot(self.data[:, self._cid].reshape((self._rows, -1)), np.diag(self._ccnt**(1/2)))        
-            self._R = np.dot(np.diag(self._rcnt**(1/2)), 
-                self.data[self._rid,:].reshape((-1, self._cols)))
+            self._C = np.dot(self.data[:, self._cid].reshape((self._rows, len(self._cid))), np.diag(self._ccnt**(1/2)))        
+            self._R = np.dot(np.diag(self._rcnt**(1/2)), self.data[self._rid,:].reshape((len(self._rid), self._cols)))
 
             self._U = np.dot(np.dot(pinv(self._C, self._k), self.data[:,:]), 
                              pinv(self._R, self._k))
@@ -143,11 +126,11 @@ class CUR(PyMFBase3):
     def factorize(self):
         """ Factorize s.t. CUR = data
             
-        Updated Values
-        --------------
-        .C : updated values for C.
-        .U : updated values for U.
-        .R : updated values for R.           
+            Updated Values
+            --------------
+            .C : updated values for C.
+            .U : updated values for U.
+            .R : updated values for R.           
         """          
         [prow, pcol] = self.sample_probability()
         self._rid = self.sample(self._rrank, prow)
@@ -157,11 +140,8 @@ class CUR(PyMFBase3):
         self._ccnt = np.ones(len(self._cid))    
                                     
         self.computeUCR()
+    
 
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()                

@@ -1,17 +1,26 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: kmeans.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """
 PyMF K-means clustering (unary-convex matrix factorization).
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
 import random
 
-import dist
-from base import PyMFBase
+import pymf.dist
+from pymf.nmf import NMF
 
 __all__ = ["Kmeans"]
 
-class Kmeans(PyMFBase):
+class Kmeans(NMF):
     """      
     Kmeans(data, num_bases=4)
     
@@ -47,44 +56,36 @@ class Kmeans(PyMFBase):
     to kmeans_mdl.W, and set compute_w to False:
     
     >>> data = np.array([[1.5], [1.2]])
-    >>> W = np.array([[1.0, 0.0], [0.0, 1.0]])
+    >>> W = [[1.0, 0.0], [0.0, 1.0]]
     >>> kmeans_mdl = Kmeans(data, num_bases=2)
     >>> kmeans_mdl.W = W
     >>> kmeans_mdl.factorize(niter=1, compute_w=False)
     
     The result is a set of coefficients kmeans_mdl.H, s.t. data = W * kmeans_mdl.H.
     """        
-    def _init_h(self):
+    def init_h(self):
         # W has to be present for H to be initialized  
         self.H = np.zeros((self._num_bases, self._num_samples))
-        self._update_h()
-         
-    def _init_w(self):
+        self.update_h()
+       
+    def init_w(self):
         # set W to some random data samples
-        sel = random.sample(xrange(self._num_samples), self._num_bases)
+        sel = random.sample(range(self._num_samples), self._num_bases)
         
         # sort indices, otherwise h5py won't work
         self.W = self.data[:, np.sort(sel)]        
        
         
-    def _update_h(self):                    
+    def update_h(self):                    
         # and assign samples to the best matching centers
-        self.assigned = dist.vq(self.W, self.data)
+        self.assigned = pymf.dist.vq(self.W, self.data)
         self.H = np.zeros(self.H.shape)
         self.H[self.assigned, range(self._num_samples)] = 1.0
                 
                     
-    def _update_w(self):            
+    def update_w(self):            
         for i in range(self._num_bases):
-            # cast to bool to use H as an index for data
-            idx = np.array(self.H[i,:], dtype=np.bool)
-            n = np.sum(idx)
-            if n > 0:
-                self.W[:,i] = np.sum(self.data[:, idx], axis=1)/n
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
-if __name__ == "__main__":
-    _test()
+            idx = np.where(self.assigned==i)[0]
+            n = len(idx)        
+            if n > 1:
+                self.W[:,i] = np.sum(self.data[:,idx], axis=1)/n

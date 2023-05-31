@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: dist.py 24 2010-09-01 07:51:05Z cthurau $
+#$Author: cthurau $
 """
 PyMF several distance functions
 
@@ -11,6 +16,10 @@ PyMF several distance functions
     vq(): Vector quantization
     
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
 import scipy.sparse
 
@@ -18,8 +27,6 @@ __all__ = ["abs_cosine_distance", "kl_divergence", "l1_distance", "l2_distance",
            "weighted_abs_cosine_distance","cosine_distance","vq", "pdist"]
 
 def kl_divergence(d, vec):    
-    """
-    """
     b = vec*(1/d)    
     b = np.where(b>0, np.log(b),0)    
     b = vec * b
@@ -55,7 +62,7 @@ def l2_distance(d, vec):
     if scipy.sparse.issparse(d):
         ret_val = sparse_l2_distance(d, vec)
     else:
-        ret_val = np.sqrt(((d[:,:] - vec)**2.0).sum(axis=0))
+        ret_val = np.sqrt(((d[:,:] - vec)**2).sum(axis=0))
             
     return ret_val.reshape((-1))        
 
@@ -106,7 +113,7 @@ def pdist(A, B, metric='l2' ):
     # Returns a distance matrix d (n x m).
     d = np.zeros((A.shape[1], B.shape[1]))
     if A.shape[1] <= B.shape[1]:
-        for aidx in xrange(A.shape[1]):
+        for aidx in range(A.shape[1]):
             if metric == 'l2':
                 d[aidx:aidx+1,:] = l2_distance(B[:,:], A[:,aidx:aidx+1]).reshape((1,-1))
             if metric == 'l1':
@@ -125,10 +132,3 @@ def vq(A, B, metric='l2'):
     # returns an index list [assume n column vectors, d x n]
     assigned = np.argmin(pdist(A,B, metric=metric), axis=0)
     return assigned
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
-if __name__ == "__main__":
-    _test()

@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010.
+# Licensed under the GNU General Public License (GPL).
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: aa.py 21 2010-08-05 08:13:08Z cthurau $
+#$Author: cthurau $
 """
 PyMF Archetypal Analysis [1]
 
@@ -8,14 +13,20 @@ PyMF Archetypal Analysis [1]
 [1] Cutler, A. Breiman, L. (1994), "Archetypal Analysis", Technometrics 36(4), 
 338-347.
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
+from pymf.dist import vq
 from cvxopt import solvers, base
 
-from svd import pinv
-from base import PyMFBase
+from pymf.svd import pinv
+from pymf.nmf import NMF
+
 __all__ = ["AA"]
 
-class AA(PyMFBase):
+class AA(NMF):
     """
     AA(data, num_bases=4)
 
@@ -32,6 +43,7 @@ class AA(PyMFBase):
     num_bases: int, optional
         Number of bases to compute (column rank of W and row rank of H).
         4 (default)       
+    
 
     Attributes
     ----------
@@ -66,30 +78,25 @@ class AA(PyMFBase):
     >>> aa_mdl = AA(data, num_bases=2)
     >>> aa_mdl.W = W
     >>> aa_mdl.factorize(niter=5, compute_w=False)
-    
+
     The result is a set of coefficients aa_mdl.H, s.t. data = W * aa_mdl.H.
     """
     # set cvxopt options
     solvers.options['show_progress'] = False
 
-    def _init_h(self):
-        """ Initialize H s.t. columns sum to 1.
-        """
+    def init_h(self):
         self.H = np.random.random((self._num_bases, self._num_samples))     
         self.H /= self.H.sum(axis=0)
             
-    def _init_w(self):
-        """ Initialize W s.t. beta sums to 1 and W is set to random value.
-        """
+    def init_w(self):
         self.beta = np.random.random((self._num_bases, self._num_samples))
         self.beta /= self.beta.sum(axis=0)
         self.W = np.dot(self.beta, self.data.T).T            
         self.W = np.random.random((self._data_dimension, self._num_bases))        
-
-    def _update_h(self):
-        """ alternating least squares step, update H enforcing a convexity
-        constraint.
-        """
+        
+    def update_h(self):
+        """ alternating least squares step, update H under the convexity
+        constraint """
         def update_single_h(i):
             """ compute single H[:,i] """
             # optimize alpha using qp solver from cvxopt
@@ -107,13 +114,12 @@ class AA(PyMFBase):
         for i in xrange(self._num_samples):
             update_single_h(i)        
 
-    def _update_w(self):
-        """ alternating least squares step, update W enforcing a convexity
-        constraint.
-        """
+    def update_w(self):
+        """ alternating least squares step, update W under the convexity
+        constraint """
         def update_single_w(i):
             """ compute single W[:,i] """
-            # optimize beta using qp solver from cvxopt
+            # optimize beta     using qp solver from cvxopt
             FB = base.matrix(np.float64(np.dot(-self.data.T, W_hat[:,i])))
             be = solvers.qp(HB, FB, INQa, INQb, EQa, EQb)
             self.beta[i,:] = np.array(be['x']).reshape((1, self._num_samples))
@@ -131,9 +137,6 @@ class AA(PyMFBase):
 
         self.W = np.dot(self.beta, self.data.T).T
 
-def _test():
+if __name__ == "__main__":
     import doctest
     doctest.testmod()
- 
-if __name__ == "__main__":
-    _test()

@@ -10,9 +10,9 @@ start for nonnegative matrix factorization, Pattern Recognition, 41, 1350-1362
 """
 import numpy as np
 
-from base import PyMFBase
-from svd import SVD
-from nmf import NMF
+from pymf.base import PyMFBase
+from pymf.svd import SVD
+from pymf.nmf import NMF
 
 __all__ = ["NNDSVD"]
 

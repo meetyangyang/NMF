@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: sivm.py 22 2010-08-13 11:16:43Z cthurau $
+#$Author: cthurau $
 """ 
 PyMF Simplex Volume Maximization [1]
 
@@ -9,11 +14,15 @@ PyMF Simplex Volume Maximization [1]
 Maximization for Descriptive Web-Scale Matrix Factorization. In Proc. Int. 
 Conf. on Information and Knowledge Management. ACM. 2010.
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import scipy.sparse
 import numpy as np
 
-from dist import *
-from aa import AA
+from pymf.dist import *
+from pymf.aa import AA
 
 __all__ = ["SIVM"]
 
@@ -67,9 +76,12 @@ class SIVM(AA):
     
     The result is a set of coefficients sivm_mdl.H, s.t. data = W * sivm_mdl.H.
     """
+    
+    # always overwrite the default number of iterations
+    # -> any value other does not make sense.
+    _NITER = 1
 
-
-    def __init__(self, data, num_bases=4, dist_measure='l2',  init='fastmap',  **kwargs):
+    def __init__(self, data, num_bases=4, dist_measure='l2',  init='fastmap'):
        
         AA.__init__(self, data, num_bases=num_bases)
             
@@ -94,8 +106,8 @@ class SIVM(AA):
                 
         elif self._dist_measure == 'kl':
             self._distfunc = kl_divergence    
-            
-            
+
+  
     def _distance(self, idx):
         """ compute distances of a specific data point to all other samples"""
             
@@ -128,13 +140,13 @@ class SIVM(AA):
                 str(idx_end/(self.data.shape[1]/100.0)) + "%")    
         return d
        
-    def _init_h(self):
+    def init_h(self):
         self.H = np.zeros((self._num_bases, self._num_samples))
         
-    def _init_w(self):        
+    def init_w(self):
         self.W = np.zeros((self._data_dimension, self._num_bases))
         
-    def _init_sivm(self):
+    def init_sivm(self):
         self.select = []
         if self._init == 'fastmap':
             # Fastmap like initialization
@@ -148,19 +160,19 @@ class SIVM(AA):
                 
             # store maximal found distance -> later used for "a" (->update_w) 
             self._maxd = np.max(d)                        
-            self.select = [cur_p]
+            self.select.append(cur_p)
 
         elif self._init == 'origin':
             # set first vertex to origin
             cur_p = -1
             d = self._distance(cur_p)
             self._maxd = np.max(d)
-            self.select = [np.argmax(d)]
+            self.select.append(cur_p)         
         
-        
-    def _update_w(self): 
+    def update_w(self): 
         """ compute new W """        
-        self._init_sivm()       
+        EPS = 10**-8
+        self.init_sivm()       
         
         # initialize some of the recursively updated distance measures ....
         d_square = np.zeros((self.data.shape[1]))
@@ -174,7 +186,7 @@ class SIVM(AA):
             d = self._distance(self.select[l-1])
             
             # take the log of d (sually more stable that d)
-            d = np.log(d + self._EPS)            
+            d = np.log(d + EPS)            
             
             d_i_times_d_j += d * d_sum
             d_sum += d
@@ -218,10 +230,7 @@ class SIVM(AA):
         AA.factorize(self, niter=1, show_progress=show_progress, 
                   compute_w=compute_w, compute_h=compute_h, 
                   compute_err=compute_err)
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
+             
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    

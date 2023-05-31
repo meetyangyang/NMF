@@ -1,26 +1,36 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: pca.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """  
 PyMF Principal Component Analysis.
 
     PCA: Class for Principal Component Analysis
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
+
 import numpy as np
 
-from base import PyMFBase
-from svd import SVD
+from pymf.nmf import NMF
+from pymf.svd import SVD
 
 
 __all__ = ["PCA"]
 
-class PCA(PyMFBase):
+class PCA(NMF):
     """      
     PCA(data, num_bases=4, center_mean=True)
     
-    Principal Component Analysis. Factorize a data matrix into two matrices s.t.
+    
+    Archetypal Analysis. Factorize a data matrix into two matrices s.t.
     F = | data - W*H | is minimal. W is set to the eigenvectors of the
-    data covariance. PCA used pymf's SVD, thus, it might be more efficient 
-    to use it directly.
+    data covariance.
     
     Parameters
     ----------
@@ -60,9 +70,9 @@ class PCA(PyMFBase):
     The result is a set of coefficients pca_mdl.H, s.t. data = W * pca_mdl.H.
     """
         
-    def __init__(self, data, num_bases=0, center_mean=True,  **kwargs):
+    def __init__(self, data, num_bases=0, center_mean=True):
 
-        PyMFBase.__init__(self, data, num_bases=num_bases)
+        NMF.__init__(self, data, num_bases=num_bases)
         
         # center the data around the mean first
         self._center_mean = center_mean            
@@ -70,21 +80,21 @@ class PCA(PyMFBase):
         if self._center_mean:
             # copy the data before centering it
             self._data_orig = data            
-            self._meanv = self._data_orig[:,:].mean(axis=1).reshape(-1,1)                
+            self._meanv = self._data_orig[:,:].mean(axis=1).reshape(data.shape[0],-1)                
             self.data = self._data_orig -  self._meanv
         else:
             self.data = data
 
-    def _init_h(self):
+    def init_h(self):
         pass
 
-    def _init_w(self):
+    def init_w(self):
         pass
     
-    def _update_h(self):                    
+    def update_h(self):                    
         self.H = np.dot(self.W.T, self.data[:,:])
         
-    def _update_w(self):
+    def update_w(self):
         # compute eigenvectors and eigenvalues using SVD            
         svd_mdl = SVD(self.data)
         svd_mdl.factorize()
@@ -124,13 +134,11 @@ class PCA(PyMFBase):
             .ferr : Frobenius norm |data-WH|.
         """
         
-        PyMFBase.factorize(self, niter=1, show_progress=show_progress, 
+        NMF.factorize(self, niter=1, show_progress=show_progress, 
                   compute_w=compute_w, compute_h=compute_h, 
                   compute_err=compute_err)
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
+                  
+                  
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()        

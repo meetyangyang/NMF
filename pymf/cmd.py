@@ -1,14 +1,22 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: cmd.py 24 2010-09-01 07:51:05Z cthurau $
+#$Author: cthurau $
 """
 PyMF Compact Matrix Decomposition [1]
 
     CMD(CUR):  Class for Compact Matrix Decomposition
 
-[1] Sun, J., Xie, Y., Zhang, H. and Faloutsos, C. (2007), Less is More: Compact 
-Matrix Decomposition for Large Sparse Graphs, in Proc. SIAM Int. Conf. on Data 
-Mining. 
+[1] Sun, J., Xie, Y., Zhang, H. and Faloutsos, C. (2007), Less is More: Compact Matrix Decomposition for Large
+Sparse Graphs, in Proc. SIAM Int. Conf. on Data Mining. 
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
 from pymf.cur import CUR
 
@@ -43,9 +51,9 @@ class CMD(CUR):
     Example
     -------
     >>> import numpy as np
-    >>> from cmde import CMD
+    >>> from cmd import CMD
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
-    >>> cmd_mdl = CMD(data, rrank=1, crank=2)    
+    >>> cmd_mdl = CMD(data, show_progress=False, rrank=1, crank=2)    
     >>> cmd_mdl.factorize()
     """
     
@@ -83,10 +91,8 @@ class CMD(CUR):
         self._cmdinit()
         
         self.computeUCR()
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
+        
+        
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()            

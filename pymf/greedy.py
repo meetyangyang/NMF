@@ -11,8 +11,8 @@ Reconstruction via Greedy Approximation of SVD. ISAAC'2008.
 import time
 import scipy.sparse
 import numpy as np
-from svd import *
-from base import PyMFBase
+from pymf.svd import *
+from pymf.base import PyMFBase
 
 __all__ = ["GREEDY"]
 

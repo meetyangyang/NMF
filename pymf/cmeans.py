@@ -1,26 +1,34 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: kmeans.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """
-PyMF C-means [1] clustering (unary-convex matrix factorization).
+PyMF K-means clustering (unary-convex matrix factorization).
+Copyright (C) Christian Thurau, 2010. GNU General Public License (GPL). 
+"""
 
-[1] J.C. Bezdek. Pattern recognition with fuzzy objective function algorithms. 
-Plenum Press, New York 1981.
-"""
+__version__ = "$Revision: 46 $"
+# $Source$
+
+
 import numpy as np
 
-import dist
-from base import PyMFBase
+import pymf.dist
+from pymf.nmf import NMF
 
 __all__ = ["Cmeans"]
 
-class Cmeans(PyMFBase):
+class Cmeans(NMF):
     """      
     cmeans(data, num_bases=4)
     
     
     Fuzzy c-means soft clustering. Factorize a data matrix into two matrices s.t.
     F = | data - W*H | is minimal. H is restricted to convexity (columns
-    sum to 1) W is simply the weighted mean over the corresponding samples in 
+    sum to 1) W    is simply the weighted mean over the corresponding samples in 
     data. Note that the objective function is based on distances (?), hence the
     Frobenius norm is probably not a good quality measure.
     
@@ -47,6 +55,7 @@ class Cmeans(PyMFBase):
     >>> from cmeans import Cmeans
     >>> data = np.array([[1.0, 0.0, 2.0], [0.0, 1.0, 1.0]])
     >>> cmeans_mdl = Cmeans(data, num_bases=2, niter=10)
+    >>> cmeans_mdl.initialization()
     >>> cmeans_mdl.factorize()
     
     The basis vectors are now stored in cmeans_mdl.W, the coefficients in cmeans_mdl.H. 
@@ -54,15 +63,16 @@ class Cmeans(PyMFBase):
     to cmeans_mdl.W, and set compute_w to False:
     
     >>> data = np.array([[1.5], [1.2]])
-    >>> W = np.array([[1.0, 0.0], [0.0, 1.0]])
+    >>> W = [[1.0, 0.0], [0.0, 1.0]]
     >>> cmeans_mdl = Cmeans(data, num_bases=2)
+    >>> cmeans_mdl.initialization()
     >>> cmeans_mdl.W = W
     >>> cmeans_mdl.factorize(compute_w=False, niter=50)
     
     The result is a set of coefficients kmeans_mdl.H, s.t. data = W * kmeans_mdl.H.
     """
 
-    def _update_h(self):                    
+    def update_h(self):                    
         # assign samples to best matching centres ...
         m = 1.75
         tmp_dist = dist.pdist(self.W, self.data, metric='l2') + self._EPS
@@ -74,14 +84,7 @@ class Cmeans(PyMFBase):
             
         self.H = np.where(self.H>0, 1.0/self.H, 0)    
                     
-    def _update_w(self):            
+    def update_w(self):            
         for i in range(self._num_bases):
             tmp = (self.H[i:i+1,:] * self.data).sum(axis=1)
             self.W[:,i] = tmp/(self.H[i,:].sum() + self._EPS)        
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
-if __name__ == "__main__":
-    _test()

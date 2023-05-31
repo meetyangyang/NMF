@@ -1,19 +1,22 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
-
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: sivm.py 22 2010-08-13 11:16:43Z cthurau $
+#$Author: cthurau $
 """ 
-PyMF SIVM-LAESA based factorization in which the simplex is constructed using
-the LAESA[1] algorithm, coefficients are computed in a standard SIVM/AA fashion.
-
-[1] Maria Luisa Mico , J. Oncina , Enrique Vidal. A new version of the nearest-
-neighbour approximating and eliminating search algorithm with linear 
-preprocessing-time and memory requirements. Pattern Recognition Letters 1994.
+PyMF LAESA
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import scipy.sparse
 import numpy as np
 
-from dist import *
-from sivm import SIVM
+from pymf.dist import *
+from pymf.sivm import SIVM
 
 __all__ = ["LAESA"]
 
@@ -50,7 +53,7 @@ class LAESA(SIVM):
     >>> laesa_mdl.factorize()
     
     The basis vectors are now stored in laesa_mdl.W, the coefficients in laesa_mdl.H. 
-    To compute coefficients for an existing set of basis vectors simply copy W 
+    To compute coefficients for an existing set of basis vectors simply    copy W 
     to laesa_mdl.W, and set compute_w to False:
     
     >>> data = np.array([[1.5, 1.3], [1.2, 0.3]])
@@ -61,9 +64,9 @@ class LAESA(SIVM):
     
     The result is a set of coefficients laesa_mdl.H, s.t. data = W * laesa_mdl.H.
     """
-    def _update_w(self):    
+    def update_w(self):    
         # initialize some of the recursively updated distance measures     
-        self._init_sivm()
+        self.init_sivm()
         distiter = self._distance(self.select[-1])                
         
         for l in range(self._num_bases-1):                                        
@@ -81,10 +84,8 @@ class LAESA(SIVM):
         
         # but "unsort" it again to keep the correct order
         self.W = self.W[:, np.argsort(np.argsort(self.select))]    
-
-def _test():
-    import doctest
-    doctest.testmod()
- 
+                           
+                   
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    

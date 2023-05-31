@@ -1,5 +1,10 @@
-# Authors: Christian Thurau
-# License: BSD 3 Clause
+#!/usr/bin/python
+#
+# Copyright (C) Christian Thurau, 2010. 
+# Licensed under the GNU General Public License (GPL). 
+# http://www.gnu.org/licenses/gpl.txt
+#$Id: bnmf.py 20 2010-08-02 17:35:19Z cthurau $
+#$Author: cthurau $
 """
 PyMF Binary Matrix Factorization [1]
 
@@ -8,12 +13,16 @@ PyMF Binary Matrix Factorization [1]
 [1]Z. Zhang, T. Li, C. H. Q. Ding, X. Zhang: Binary Matrix Factorization with 
 Applications. ICDM 2007
 """
+
+__version__ = "$Revision: 46 $"
+# $Source$
+
 import numpy as np
-from base import PyMFBase
+from pymf.nmf import NMF
 
 __all__ = ["BNMF"]
 
-class BNMF(PyMFBase):
+class BNMF(NMF):
     """      
     BNMF(data, data, num_bases=4)
     Binary Matrix Factorization. Factorize a data matrix into two matrices s.t.
@@ -71,9 +80,7 @@ class BNMF(PyMFBase):
     _LAMB_INCREASE_W = 1.1 
     _LAMB_INCREASE_H = 1.1    
         
-    def _update_h(self):
-        """ 
-        """
+    def update_h(self):
         H1 = np.dot(self.W.T, self.data[:,:]) + 3.0*self._lamb_H*(self.H**2)
         H2 = np.dot(np.dot(self.W.T,self.W), self.H) + 2*self._lamb_H*(self.H**3) + self._lamb_H*self.H + 10**-9
         self.H *= H1/H2
@@ -81,17 +88,13 @@ class BNMF(PyMFBase):
         self._lamb_W = self._LAMB_INCREASE_W * self._lamb_W
         self._lamb_H = self._LAMB_INCREASE_H * self._lamb_H
 
-    def _update_w(self):
+    def update_w(self):
         W1 = np.dot(self.data[:,:], self.H.T) + 3.0*self._lamb_W*(self.W**2)
         W2 = np.dot(self.W, np.dot(self.H, self.H.T)) + 2.0*self._lamb_W*(self.W**3) + self._lamb_W*self.W  + 10**-9
         self.W *= W1/W2
 
-    def factorize(self, 
-                    niter=10, 
-                    compute_w=True, 
-                    compute_h=True, 
-                    show_progress=False, 
-                    compute_err=True):
+    def factorize(self, niter=10, compute_w=True, compute_h=True, 
+                  show_progress=False, compute_err=True):
         """ Factorize s.t. WH = data
             
             Parameters
@@ -119,13 +122,10 @@ class BNMF(PyMFBase):
         self._lamb_W = 1.0/niter
         self._lamb_H = 1.0/niter  
         
-        PyMFBase.factorize(self, niter=niter, compute_w=compute_w, 
+        NMF.factorize(self, niter=niter, compute_w=compute_w, 
                       compute_h=compute_h, show_progress=show_progress,
                       compute_err=compute_err)
 
-def _test():
-    import doctest
-    doctest.testmod()
- 
 if __name__ == "__main__":
-    _test()
+    import doctest  
+    doctest.testmod()    
